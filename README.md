@@ -1,5 +1,5 @@
 # PyTorch Implementation for Ensemble Kalman Variational Objective (EnKO)
-This repository includes codes for "Ensemble Kalman Variational Objectives: Nonlinear Latent Time-Series Model Inference by a Hybrid of Variational Inference and Ensemble Kalman Filter," an under review paper for ICML.
+This repository includes PyTorch implementation for "Ensemble Kalman Variational Objectives: Nonlinear Latent Time-Series Model Inference by a Hybrid of Variational Inference and Ensemble Kalman Filter," an under review paper for ICML.
 Following double-blind review policy of ICML, we hide our names and affilications.
 If our paper is accepted, we would like to open same repository in our mainly used GitHub page.
 
@@ -29,6 +29,15 @@ This repository includes following systems, models and data.
 ## How to Implement
 1. Set "config.json" file in SVAE directory. The details are described in later.
 1. Run "run_svae.py" file by "python run_svae.py". Implementaion of several conditions are carried out by "python gs_svae.py".
+
+## Requirement
+We implemented our script by following environments.
+- Cuda 10.2
+- Python 3.8.5
+- NumPy (numpy) 1.19.1
+- matplotlib 3.3.1
+- PyTorch (torch) 1.6.0
+- torchvision 0.7.0
 
 ## Configuration
 Configuration is divided into multiple blocks.
