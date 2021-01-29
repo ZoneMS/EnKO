@@ -47,7 +47,7 @@ To reproduce results in our paper, we describe the detailed condition by ( ).
     - lr (1e-3): learning rate for SGD.
     - epoch (2000): number of epochs for SGD.
     - conti_learn (false): whether continue from where the last learning ended. If true, load model and optimizer from the last learning whose epoch is *load_epoch*.
-    - load_epoch (0): epoch for loading. if *conti_learn", a user should set this value else 0.
+    - load_epoch (0): epoch for loading. if *conti_learn*, a user should set this value else 0.
     - train_rate (FHN=0.5, Lorenz=0.66): ratio for train data.
     - valid_rate (FHN=0.1, Lorenz=0.17): ratio for validation data.
     - num_workers (0): how many subprocesses to use for data loading in [DataLoader](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader) class. 0 means that the data will be loaded in main process.
@@ -57,7 +57,7 @@ To reproduce results in our paper, we describe the detailed condition by ( ).
     - system: ensemble system for introducing a model. A user can choose from "EnKO", "FIVO", or "IWAE".
     - model: model for training. A user can choose from "SVO", "VRNN", "SRNN", "AESMC", or "PSVO". If the user set "PSVO", *system* must be "FIVO".
     - data_name: name of data. A user can choose from "FHN", "Lorenz", or "Allen".
-    - scaling (FHN="abs-div", Lorenz="abs-div"): a scaling method for preprocessing data. A user can choose from "abs-div" (absolute division along each dimension), "min-max" (\[0,1\] scaling along each dimension), "th-abs-div" (similar to "abs-div", but a user can set minimum value for scaling by *scaling_factor*), "standard" (normalization along each dimension), or "null".
+    - scaling (FHN=abs-div, Lorenz=abs-div): a scaling method for preprocessing data. A user can choose from "abs-div" (absolute division along each dimension), "min-max" (\[0,1\] scaling along each dimension), "th-abs-div" (similar to "abs-div", but a user can set minimum value for scaling by *scaling_factor*), "standard" (normalization along each dimension), or "null".
     - scaling_factor (0): a scaling factor for "th-abs-div" scaling.
 - training
     - scheduler (Plateau): a scheduler for optimizing learning rate. A user can choose from "Plateau" (decay learning rate by *decay_rate* when a validation loss has stopped improving for *patience* epochs), "StepLR" (decays the learning rate of each parameter group by *decay_rate* every *decay_steps* epochs), or "null".
