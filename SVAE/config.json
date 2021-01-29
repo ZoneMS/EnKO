@@ -1,0 +1,64 @@
+{
+    "train":{
+        "batch_size":6,
+        "lr":1e-3,
+        "epoch":1,
+        "conti_learn":false,
+        "load_epoch":0,
+        "train_rate":0.66,
+        "valid_rate":0.17,
+        "num_workers":0,
+        "seed":1,
+        "gpu":2
+    },
+    
+    "data":{
+        "system":"EnKO",
+        "model":"SVO",
+        "data_name":"Lorenz",
+        "scaling":"abs-div",
+        "scaling_factor":0
+    },
+    
+    "training":{
+        "scheduler":"Plateau",
+        "decay_steps":200,
+        "decay_rate":0.7,
+        "patience":30,
+        "min_lr":3e-4,
+        "early_stop_patience":2000,
+        "clip":10,
+        "pred_steps":20
+    },
+    
+    "network":{
+        "Dz":3,
+        "Dh":32,
+        "rnn":"GRU",
+        "n_rnn_units":32,
+        "n_particles":16,
+        "n_bw_particles":16,
+        "dropout_ratio":0,
+        "n_layers":1,
+        "bias":false,
+        "output_dist":"Gauss",
+        "output_fn":"linear",
+        "residual_on":true,
+        "init_inference":true,
+        "sigma_init":1,
+        "sigma_min":0.1,
+        "sigma_train":true,
+        "enc_steps":null
+    },
+    
+    "enko":{
+        "filtering_method":"inverse",
+        "inflation_method":"RTPP",
+        "inflation_factor":0.1
+    },
+    
+    "print":{
+        "print_freq":1,
+        "save_freq":1
+    }
+}
