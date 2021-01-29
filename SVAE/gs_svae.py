@@ -21,7 +21,7 @@ def gs_main():
     config = json.load(f)
     f.close()
     
-    parallel_on = False
+    parallel_on = True
     number_of_date = ""
     
     gs_dict = {"system":["EnKO", "FIVO", "IWAE"]}
