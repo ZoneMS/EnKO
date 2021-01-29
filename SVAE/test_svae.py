@@ -18,11 +18,11 @@ from utils import load_data, transform_data, get_dataset, get_model, plot_predic
 
 def test():
     if True:
-        name = "210129_Lorenz_gs/sEnKOmSRNN"
+        name = "210129_SVO_FHN_gs/sEnKO"
         name = "../results/{}".format(name)
         test_main(name)
     else:
-        gs_name = "210129_FHN_gs"
+        gs_name = "210129_SVO_FHN_gs"
         files = os.listdir(os.path.join("../results", gs_name))
         files_dir = [os.path.join("../results", gs_name, f) for f in files if os.path.isdir(os.path.join("../results", gs_name, f))]
         for f in files_dir:

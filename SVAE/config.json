@@ -1,21 +1,21 @@
 {
     "train":{
-        "batch_size":6,
+        "batch_size":20,
         "lr":1e-3,
-        "epoch":1,
+        "epoch":2000,
         "conti_learn":false,
         "load_epoch":0,
-        "train_rate":0.66,
-        "valid_rate":0.17,
+        "train_rate":0.5,
+        "valid_rate":0.1,
         "num_workers":0,
         "seed":1,
-        "gpu":2
+        "gpu":0
     },
     
     "data":{
         "system":"EnKO",
         "model":"SVO",
-        "data_name":"Lorenz",
+        "data_name":"FHN",
         "scaling":"abs-div",
         "scaling_factor":0
     },
@@ -32,7 +32,7 @@
     },
     
     "network":{
-        "Dz":3,
+        "Dz":2,
         "Dh":32,
         "rnn":"GRU",
         "n_rnn_units":32,

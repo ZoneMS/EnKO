@@ -24,7 +24,7 @@ def gs_main():
     parallel_on = False
     number_of_date = ""
     
-    gs_dict = {"system":["FIVO"], "model":["PSVO"]}
+    gs_dict = {"system":["EnKO", "FIVO", "IWAE"]}
     gs_key = list(gs_dict.keys())
     gs_length = len(gs_dict)
     

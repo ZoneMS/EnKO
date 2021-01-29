@@ -12,7 +12,7 @@ This repository includes following systems, models and data.
     - [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114): combination between forward filtering backward simulation (FFBSi) and VI
 - Models (SVAE/model/)
     - [SVO](https://openreview.net/forum?id=HJg24U8tuE)
-    - [AESMC](](https://openreview.net/forum?id=BJ8c3f-0b)
+    - [AESMC](https://openreview.net/forum?id=BJ8c3f-0b)
     - [VRNN](https://papers.nips.cc/paper/2015/hash/b618c3210e934362ac261db280128c22-Abstract.html)
     - [SRNN](https://papers.nips.cc/paper/2016/hash/208e43f0e45c4c78cafadb83d2888cb6-Abstract.html)
     - [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114)
