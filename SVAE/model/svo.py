@@ -26,34 +26,57 @@ class SVO(BaseModel):
         self.sigma_train = config["network"]["sigma_train"]
         
         ## network of vae
-        self.q0_tran = nn.Sequential(
-            nn.Linear(2*self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+        if self.dropout_ratio==0 and True:
+            self.q0_tran = nn.Sequential(
+                nn.Linear(2*self.h_dim, self.h_dim),
+                nn.ReLU())
 
-        self.f_tran = nn.Sequential(
-            nn.Linear(self.z_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.f_tran = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
 
-        self.q_tran = nn.Sequential(
-            nn.Linear(2*self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.q_tran = nn.Sequential(
+                nn.Linear(2*self.h_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
 
-        self.g_tran = nn.Sequential(
-            nn.Linear(self.z_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.g_tran = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
+        else:
+            self.q0_tran = nn.Sequential(
+                nn.Linear(2*self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.f_tran = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.q_tran = nn.Sequential(
+                nn.Linear(2*self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.g_tran = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
         
         self.q0_mu = nn.Linear(self.h_dim, self.z_dim)
         self.f_mu = nn.Linear(self.h_dim, self.z_dim)

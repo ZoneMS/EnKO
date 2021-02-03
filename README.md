@@ -1,7 +1,7 @@
 # PyTorch Implementation for Ensemble Kalman Variational Objective (EnKO)
-This repository includes PyTorch implementation for "Ensemble Kalman Variational Objectives: Nonlinear Latent Time-Series Model Inference by a Hybrid of Variational Inference and Ensemble Kalman Filter," an under review paper for ICML.
-Following double-blind review policy of ICML, we hide our names and affilications.
-If our paper is accepted, we would like to open same repository in our mainly used GitHub page.
+This repository includes PyTorch implementation for "Ensemble Kalman Variational Objective: Nonlinear Latent Time-Series Model Inference by a Hybrid of Variational Inference and Ensemble Kalman Filter," an under review paper for ICML.
+Following double-blind review policy of ICML, we hide our names and affiliations.
+If our paper is accepted, we would like to open the identical repository in our mainly used GitHub page.
 
 ## Contents
 This repository can implement following systems, models and data.
@@ -16,7 +16,7 @@ This repository can implement following systems, models and data.
     - [VRNN](https://papers.nips.cc/paper/2015/hash/b618c3210e934362ac261db280128c22-Abstract.html)
     - [SRNN](https://papers.nips.cc/paper/2016/hash/208e43f0e45c4c78cafadb83d2888cb6-Abstract.html)
     - [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114)
-        - Scripts of SVO, AESMC, and PSVO were started in [PSVO TensorFlow repository](https://github.com/amoretti86/PSVO) and we heavily refactored them for PyTorch implementation and new features.
+        - Scripts of SVO, AESMC, and PSVO were started from [PSVO TensorFlow repository](https://github.com/amoretti86/PSVO) and we heavily refactored them for PyTorch implementation and new features.
 - Data (data/)
     - FitzHugh-Nagumo Model
         - This generating process can be shown in "data_FHN.ipynb".
@@ -27,8 +27,11 @@ This repository can implement following systems, models and data.
         - We obtained this original data and converted normalized data by preprocessing same as [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114).
 
 ## How to Implement
+How to implement the ensemble systems with the networks are follows
 1. Set "config.json" file in SVAE directory. The details are described in later.
 1. Run "run_svae.py" file by "python run_svae.py". Parallel implementaion of several conditions are carried out by "python gs_svae.py".
+
+Experiments for variance of the gradient estimates described in Appendix A of the supplementary material are replicated by "SVAE/bias.ipynb"
 
 ## Requirement
 We implemented our script in following environments.

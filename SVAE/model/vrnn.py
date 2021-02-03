@@ -20,38 +20,65 @@ class VRNN(BaseModel):
         super(VRNN, self).__init__(x_dim, config, device)
         self.init_inference = config["network"]["init_inference"]
         
-        self.phi_x = nn.Sequential(
-            nn.Linear(self.x_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
-        self.phi_z = nn.Sequential(
-            nn.Linear(self.z_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+        if self.dropout_ratio==0 and True:
+            self.phi_x = nn.Sequential(
+                nn.Linear(self.x_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
+            self.phi_z = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
 
-        self.enc = nn.Sequential(
-            nn.Linear(self.h_dim + self.r_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.enc = nn.Sequential(
+                nn.Linear(self.h_dim + self.r_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
 
-        self.prior = nn.Sequential(
-            nn.Linear(self.r_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.prior = nn.Sequential(
+                nn.Linear(self.r_dim, self.h_dim),
+                nn.ReLU())
 
-        self.dec = nn.Sequential(
-            nn.Linear(self.h_dim + self.r_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU(),
-            nn.Linear(self.h_dim, self.h_dim),
-            nn.Dropout(self.dropout_ratio),
-            nn.ReLU())
+            self.dec = nn.Sequential(
+                nn.Linear(self.h_dim + self.r_dim, self.h_dim),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.ReLU())
+        else:
+            self.phi_x = nn.Sequential(
+                nn.Linear(self.x_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+            self.phi_z = nn.Sequential(
+                nn.Linear(self.z_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.enc = nn.Sequential(
+                nn.Linear(self.h_dim + self.r_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.prior = nn.Sequential(
+                nn.Linear(self.r_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
+
+            self.dec = nn.Sequential(
+                nn.Linear(self.h_dim + self.r_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU(),
+                nn.Linear(self.h_dim, self.h_dim),
+                nn.Dropout(self.dropout_ratio),
+                nn.ReLU())
         
         self.enc_mean = nn.Linear(self.h_dim, self.z_dim)
         self.enc_std = nn.Sequential(
