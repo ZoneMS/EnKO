@@ -31,7 +31,7 @@ How to implement the ensemble systems with the networks are follows
 1. Set "config.json" file in SVAE directory. The details are described in later.
 1. Run "run_svae.py" file by "python run_svae.py". Parallel implementaion of several conditions are carried out by "python gs_svae.py".
 
-Experiments for variance of the gradient estimates described in Appendix A of the supplementary material are replicated by "SVAE/bias.ipynb"
+Experiments for variance of the gradient estimates described in Appendix A of our supplementary material are replicated by "SVAE/bias.ipynb"
 
 ## Requirement
 We implemented our script in following environments.
@@ -41,6 +41,17 @@ We implemented our script in following environments.
 - matplotlib 3.3.1
 - PyTorch (torch) 1.6.0
 - torchvision 0.7.0
+
+## Examples of Estimated Results
+Latent trajectory inference for FHN data (left: true trajectory, right: inferred latent trajectory)
+![fhn](https://github.com/ZoneMS/EnKO/tree/main/figs/quiver_plot2000.pdf)
+
+Latent trajectory inference for Lorenz data (left: true trajectory, right: inferred latent trajectory)
+![lorenz](https://github.com/ZoneMS/EnKO/tree/main/figs/traj_plot1540.pdf))
+
+Trajectory inference for Allen Brain Atlas dataset (numbers corresponds to 10 test data)
+![allen](https://github.com/ZoneMS/EnKO/tree/main/figs/traj_plot2000.pdf)
+
 
 ## Configuration
 Configuration is divided into multiple blocks.
