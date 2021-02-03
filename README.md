@@ -44,8 +44,8 @@ We implemented our script in following environments.
 
 ## Examples of Estimated Results
 Latent trajectory inference for FHN data (left: true trajectory, right: inferred latent trajectory)
-
-![fhn](https://github.com/ZoneMS/EnKO/tree/main/figs/quiver_plot2000.png)
+<img src="figs/quiver_plot2000.png" alt="fhn" title="fhn">
+![fhn](figs/quiver_plot2000.png)
 
 Latent trajectory inference for Lorenz data (left: true trajectory, right: inferred latent trajectory)
 
