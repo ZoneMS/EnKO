@@ -44,16 +44,13 @@ We implemented our script in following environments.
 
 ## Examples of Estimated Results
 Latent trajectory inference for FHN data (left: true trajectory, right: inferred latent trajectory)
-<img src="figs/quiver_plot2000.png" alt="fhn" title="fhn">
 ![fhn](figs/quiver_plot2000.png)
 
 Latent trajectory inference for Lorenz data (left: true trajectory, right: inferred latent trajectory)
-
-![lorenz](https://github.com/ZoneMS/EnKO/tree/main/figs/traj_plot1540.png)
+![lorenz](figs/traj_plot1540.png)
 
 Trajectory inference for Allen Brain Atlas dataset (numbers corresponds to 10 test data)
-
-![allen](https://github.com/ZoneMS/EnKO/tree/main/figs/traj_plot2000.png)
+![allen](figs/traj_plot2000.png)
 
 
 ## Configuration
