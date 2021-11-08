@@ -21,6 +21,9 @@ class FIVO(BaseSystem):
     def __init__(self, x_dim, config, device):
         super(FIVO, self).__init__(x_dim, config, device)
     
+        self.resampling = config["fivo"]["resampling"]
+        self.alpha = config["fivo"]["alpha"]
+    
     
     def _resample_particles(self, X, logW, sample_size=None):
         """resample particles following their likelihood"""

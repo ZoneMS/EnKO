@@ -9,29 +9,25 @@ This repository can implement following systems, models and data.
     - EnKO (ours): combination between ensemble Kalman filter (EnKF) and variational inference (VI)
     - [(Sequential) IWAE](https://arxiv.org/abs/1509.00519): sequential version of importance weighted auto-encoder
     - [FIVO](https://papers.nips.cc/paper/2017/hash/fa84632d742f2729dc32ce8cb5d49733-Abstract.html), also called [AESMC](https://openreview.net/forum?id=BJ8c3f-0b) or [VSMC](http://proceedings.mlr.press/v84/naesseth18a.html): combination between sequential Monte Carlo (SMC) and VI
-    - [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114): combination between forward filtering backward simulation (FFBSi) and VI
 - Models (SVAE/model/)
     - [SVO](https://openreview.net/forum?id=HJg24U8tuE)
     - [AESMC](https://openreview.net/forum?id=BJ8c3f-0b)
     - [VRNN](https://papers.nips.cc/paper/2015/hash/b618c3210e934362ac261db280128c22-Abstract.html)
     - [SRNN](https://papers.nips.cc/paper/2016/hash/208e43f0e45c4c78cafadb83d2888cb6-Abstract.html)
-    - [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114)
-        - Scripts of SVO, AESMC, and PSVO were started from [PSVO TensorFlow repository](https://github.com/amoretti86/PSVO) and we heavily refactored them for PyTorch implementation and new features.
 - Data (data/)
     - FitzHugh-Nagumo Model
         - This generating process can be shown in "data_FHN.ipynb".
     - Lorenz Model
         - This generating process can be shown in "data_Lorenz.ipynb".
-    - Allen Brain Atlas Dataset
-        - This original data "SmallRipickledAllenDatawl" can be obtained in PSVO/data/allen directory in [PSVO repository](https://github.com/amoretti86/PSVO/tree/master/data/allen).
-        - We obtained this original data and converted normalized data by preprocessing same as [PSVO](https://www.semanticscholar.org/paper/Variational-Objectives-for-Markovian-Dynamics-with-Moretti-Wang/ccd5761c40305c4ffcc3a7cbc387ba1273895114).
+    - Walking Dataset from [CMU Motion Capture Library](http://mocap.cs.cmu.edu/)
+    - Rotating MNIST Dataset from [this repository](https://github.com/ChaitanyaBaweja/RotNIST)
 
 ## How to Implement
 How to implement the ensemble systems with the networks are follows
 1. Set "config.json" file in SVAE directory. The details are described in later.
 1. Run "run_svae.py" file by "python run_svae.py". Parallel implementaion of several conditions are carried out by "python gs_svae.py".
 
-Experiments for variance of the gradient estimates described in Appendix A of our supplementary material are replicated by "SVAE/bias.ipynb"
+Experiments for variance of the gradient estimates described in Appendix A of our supplementary material are replicated in "SVAE/bias.ipynb"
 
 ## Requirement
 We implemented our script in following environments.
@@ -41,68 +37,95 @@ We implemented our script in following environments.
 - matplotlib 3.3.1
 - PyTorch (torch) 1.6.0
 - torchvision 0.7.0
+- comet-ml 3.12.0
 
 ## Examples of Estimated Results
-Latent trajectory inference for FHN data (left: true trajectory, right: inferred latent trajectory)
-![fhn](figs/quiver_plot2000.png)
+True and inferred latent dynamics and trajectories for FHN data (left: true dynamics, right: inferred latent dynamics).
+![true dynamics](figs/test_quiver_plot_orig.pdf)
+![inferred dynamics](figs/test_quiver_plot_recon.pdf)
 
-Latent trajectory inference for Lorenz data (left: true trajectory, right: inferred latent trajectory)
-![lorenz](figs/traj_plot1540.png)
+True and inferred latent trajectories for Lorenz data (left: true trajectories, right: inferred latent trajectories).
+![true trajectories](figs/test_traj_plot_ax_orig.pdf)
+![inferred trajectories](figs/test_traj_plot_ax_recon.pdf)
 
-Trajectory inference for Allen Brain Atlas dataset (numbers corresponds to 10 test data)
-![allen](figs/traj_plot2000.png)
+Long prediction results for the walking dataset.
+We inferred the initial latent state and predicted the values of the observations at all remaining time points according to the learned generative model.
+The black times represent the observed points, the solid blue line represents the predicted mean, and the dark and light blue widths represent the predicted mean plus or minus standard deviation and two standard deviations, respectively.
+The text in the figure shows the variable names.
+The vz, vx, and vy correspond to velocities, alpha, beta, and gamma correspond to Euler angles, and l and r correspond to left and right.
+![walking](figs/mocap_rtps_init_running.pdf)
+
+True images and prediction results for rotating MNIST dataset.
+![rmnist](figs/rmnist_plotnew.pdf)
 
 
 ## Configuration
 Configuration is divided into multiple blocks.
-To reproduce results in our paper, we describe the detailed condition by parentheses ( ).
+To reproduce results in our paper, we describe the detailed conditions by parentheses (F: Fitz-Hugh Nagumo, L: Lorenz, W: Walking, R: RMNIST).
 - train
-    - batch_size (FHN=20, Lorenz=6, Allen=5): batch size for minibatch SGD.
+    - batch_size (F:20, L:6, W:4, R:40): batch size for minibatch SGD.
     - lr (1e-3): learning rate for SGD.
-    - epoch (2000): number of epochs for SGD.
+    - epoch (FLW:2000, R:3000): number of epochs for SGD.
     - conti_learn (false): whether continue from where the last learning ended. If true, load model and optimizer from the last learning whose epoch is *load_epoch*.
     - load_epoch (0): epoch for loading. if *conti_learn*, a user should set this value else 0.
-    - train_rate (FHN=0.5, Lorenz=0.66): ratio for train data.
-    - valid_rate (FHN=0.1, Lorenz=0.17): ratio for validation data. Residual ratio corresponds to test data.
+    - train_rate (F:0.5, L:0.66): ratio for train data.
+    - valid_rate (F:0.1, L:0.17): ratio for validation data. Residual ratio corresponds to test data.
+    - train_num (W:16, R:360): number of train samples.
+    - valid_num (W:3, R:40): number of valid samples.
     - num_workers (0): how many subprocesses to use for data loading in [DataLoader](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader) class. 0 means that the data will be loaded in main process.
-    - seed (0~2): seed for randomness.
-    - gpu (0~2): GPU ID.
+    - seed (1~3): seed for randomness.
+    - gpu (0): GPU ID.
 - data
     - system: ensemble system for introducing a model. A user can choose from "EnKO", "FIVO", or "IWAE".
-    - model: model for training. A user can choose from "SVO", "VRNN", "SRNN", "AESMC", or "PSVO". If the user set "PSVO", *system* must be "FIVO".
-    - data_name: name of data. A user can choose from "FHN", "Lorenz", or "Allen".
-    - scaling (FHN=abs-div, Lorenz=abs-div, Allen=null): scaling method for preprocessing data. A user can choose from "abs-div" (absolute division along each dimension), "min-max" (\[0,1\] scaling along each dimension), "th-abs-div" (similar to "abs-div", but a user can set minimum value for scaling by *scaling_factor*), "standard" (normalization along each dimension), or "null".
+    - outer_model (FLW:null, R:StyleConv): outer VAE structure. A use can choose from null, "Conv", and "StyleConv".
+    - model (SVO): model for training. A user can choose from "SVO", "VRNN", and "AESMC".
+    - data_name: name of data. A user can choose from "FHN", "Lorenz", "Mocap" or "rmnist".
+    - scaling (FL:abs-div, WR:null): scaling method for preprocessing data. A user can choose from "abs-div" (absolute division along each dimension), "min-max" (\[0,1\] scaling along each dimension), "th-abs-div" (similar to "abs-div", but a user can set minimum value for scaling by *scaling_factor*), "standard" (normalization along each dimension), or "null".
     - scaling_factor (0): scaling factor for "th-abs-div" scaling.
 - training
     - scheduler (Plateau): scheduler for optimizing learning rate. A user can choose from "Plateau" (decay learning rate by *decay_rate* when a validation loss has stopped improving for *patience* epochs), "StepLR" (decays the learning rate of each parameter group by *decay_rate* every *decay_steps* epochs), or "null".
-    - decay_steps (200): period of learning rate decay if *scheduler* is "StepLR".
-    - decay_rate (0.7): multiplicative factor for learning rate decay.
-    - patience (FHN=30, Lorenz=50, Allen=50): number of epochs with no improvement after which learning rate will be reduced if *scheduler* is "Plateau".
+    - decay_steps (FL:200,R:20): period of learning rate decay for *scheduler* of "StepLR".
+    - decay_rate (FLW:0.7,R:0.8): multiplicative factor for learning rate decay.
+    - patience (FR:30, LW:50): number of epochs with no improvement after which learning rate will be reduced for *scheduler* of "Plateau".
+    - clip (FLW:10,R:150): maximum value of norm of the gradient for [gradient norm clipping](https://pytorch.org/docs/stable/generated/torch.nn.utils.clip_grad_norm_.html).
     - min_lr (3e-4): a lower bound on the learning rate of all parameter groups or each group respectively.
-    - early_stop_patience (1000): number of epoch with no improvement after which early stopping is triggered.
-    - clip (10): maximum value of norm of the gradient for [gradient norm clipping](https://pytorch.org/docs/stable/generated/torch.nn.utils.clip_grad_norm_.html).
-    - pred_steps (20): number of predictive steps for calculating MSE and R2.
+    - early_stop_patience (3000): number of epoch with no improvement after which early stopping is triggered.
+    - pred_steps (FLW:20, R:15): number of predictive steps for calculating MSE and R2.
 - network
-    - Dz (FHN=2, Lorenz=3, Allen=3): dimension of latent variables.
-    - Dh (32): dimension of hidden variables.
+    - Dz (F:2, L:3, W:6, R:2): dimension of latent variables.
+    - Dh (FL:32, W:100, R:50): dimension of hidden variables.
     - rnn (GRU): recurrent neural network in model. A user can choose from "RNN", "GRU", or "LSTM".
-    - n_rnn_units (32): dimension of hidden variables for RNN.
-    - n_particles (16): number of particles for ensemble system.
-    - n_bw_particles (16): number of backward particles for PSVO.
-    - dropout_ratio (0): dropout ratio.
+    - n_rnn_units (FL:32, W:100, R:50): dimension of hidden variables for RNN.
+    - n_particles (FL:16, W:128, R:32): number of particles for ensemble system.
     - n_layers (1): number of layers for RNN.
     - bias (false): bias for network.
-    - output_dist (Gauss): output distribution for observation. A user can choose from "Gauss", "Laplace", or "Bernoulli".
-    - ouput_fn (linear): activation function for final layer. A user can choose from "linear", "relu", "softmax", "softplus", "sigmoid", or "tanh".
-    - residual_on (true): whethre use residual variables for "SRNN".
+    - dropout_ratio (0): dropout ratio.
+    - output_dist (Gauss): output distribution for SVAE. A user can choose from "Gauss", "Laplace", or "Bernoulli".
+    - ouput_fn (linear): activation function for final layer of SVAE. A user can choose from "linear", "relu", "softmax", "softplus", "sigmoid", or "tanh".
+    - outer_output_dist (R:Bernoulli): output distribution for outer VAE. A user can choose from "Gauss", "Laplace", or "Bernoulli".
+    - ouput_fn (R:Sigmoid): activation function for final layer of outer VAE. A user can choose from "linear", "relu", "softmax", "softplus", "sigmoid", or "tanh".
     - init_inference (true): whether compute initial inference of hidden variables for "VRNN". Although the original VRNN uses no initial inference, the inference should improve the performance.
-    - sigma_init (1.0): initial variance of transition, inference, and emission for "SVO", "AESMC", and "PSVO".
-    - sigma_min (0.1): minimum variance of transition, inference, and emission for "SVO", "AESMC", and "PSVO".
+    - sigma_init (1.0): initial variance of transition, inference, and emission for "SVO" and "AESMC".
+    - sigma_min (0.1): minimum variance of transition, inference, and emission for "SVO" and "AESMC".
     - enc_steps (null): number of time-steps for initial inference for "VRNN", "SVO", and "PSVO". Null means use for all time-steps.
+    - loss_type (EnKO:sumprod, FIVO:prodsum, IWAE:sumprod): loss type for computation. EnKO and IWAE should be "sumprod", and FIVO should be "prodsum".
 - enko (only valid for EnKO implementation)
     - filtering_method (inverse): filtering algoritm of the EnKF. A user can choose from "inverse" (default algorithm as described in our paper), "inverse-ide" (directly use diagonal variance of emission), "diag-inverse" (approximate sample covarince matrix by diagonal covariance), or "etkf-diag" (ensemble transform Kalman filter version).
-    - inflation_method (RTPP): inflation method for the EnKF. A user can choose from "RTPP" ([relaxation to prior perturbation](https://journals.ametsoc.org/view/journals/mwre/132/5/1520-0493_2004_132_1238_ioieao_2.0.co_2.xml)), "RTPS" ([relaxation to prior spread](https://journals.ametsoc.org/view/journals/mwre/140/9/mwr-d-11-00276.1.xml)), or "null".
-    - inflatio_factor (0.1): inflation factor for the inlfation method.
+    - inflation_method: inflation method for the EnKF. A user can choose from "RTPP" ([relaxation to prior perturbation](https://journals.ametsoc.org/view/journals/mwre/132/5/1520-0493_2004_132_1238_ioieao_2.0.co_2.xml)), "RTPS" ([relaxation to prior spread](https://journals.ametsoc.org/view/journals/mwre/140/9/mwr-d-11-00276.1.xml)), or "null".
+    - inflatio_factor: inflation factor for the inlfation method. This value should be from 0 to 1.
+- conv (only valid for outer Convolution VAE)
+    - filter_enc (R:\[16,32,64\]): filter size of encoder.
+    - kernel_enc (R:\[5,5,5\]): kernel size of encoder.
+    - stride_enc (R:\[2,2,2\]): stride size of encoder.
+    - padding_enc (R:\[2,2,2\]): padding size of encoder.
+    - bn_enc (R:\[true,true,true\]): whether batch normlize in encoder.
+    - filter_dec (R:\[64,32,16,8\]): filter size of decoder.
+    - kernel_dec (R:\[3,5,5,5\]): kernel size of decoder.
+    - stride_dec (R:\[1,2,2,1\]): stride size of decoder.
+    - padding_dec (R:\[0,1,1,2\]): padding size of decoder.
+    - output_padding_dec (R:\[0,0,1,0\]): output padding size of decoder.
+    - bn_dec (R:\[true,true,true\]): whether batch normlize in decoder.
+    - conv_activation_fn: activation function for outer VAE. A user can choose from "linear", "relu", "softmax", "softplus", "sigmoid", or "tanh".
 - print
     - print_freq: period of printing training process.
     - save_freq: period of saving training results.

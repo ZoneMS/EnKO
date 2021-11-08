@@ -21,6 +21,7 @@ class EnKO(BaseSystem):
     def __init__(self, x_dim, config, device):
         super(EnKO, self).__init__(x_dim, config, device)
 
+        self.integrate_Sigma_on = config["enko"]["integrate_Sigma_on"]
         filtering_method = config["enko"]["filtering_method"]
         inflation_method = config["enko"]["inflation_method"]
         self.inflation_factor = config["enko"]["inflation_factor"]
@@ -33,6 +34,10 @@ class EnKO(BaseSystem):
             self.update = self._enkf_diagonal_inverse
         elif filtering_method=="etkf-diag":
             self.update = self._etkf_R_diagonal
+        elif filtering_method=="evensen":
+            self.update = self._enkf_Gauss_evensen
+        elif filtering_method=="cholesky-inverse":
+            self.update = self._enkf_Gauss_cholesky
         else:
             raise ValueError("input filtering method is incorrect.")
         self.filtering_method = filtering_method
@@ -55,10 +60,15 @@ class EnKO(BaseSystem):
         # direct estimate for HVH+R
         Sigma_w_t = addjust_term * (centered_x_t.unsqueeze(3).repeat(1,1,1,self.x_dim)
                     * centered_x_t.unsqueeze(2).repeat(1,1,self.x_dim,1)).mean(axis=0) # (bs,Dx,Dx)
+        if not self.integrate_Sigma_on:
+            Sigma_w_t = Sigma_w_t + addjust_term * (centered_dec_mean_t.unsqueeze(3).repeat(1,1,1,self.x_dim)
+                                    * centered_dec_mean_t.unsqueeze(2).repeat(1,1,self.x_dim,1)).mean(axis=0) # (bs,Dx,Dx)
         
         # Kalman gain
         K_t = Sigma_zx_t @ torch.inverse(Sigma_w_t) # (bs,Dz,Dx)
         increment = (K_t @ (x_t - x_hat_t).permute(1,2,0)).permute(2,0,1) # (np,bs,Dz)
+        #print("K_t:", K_t)
+        #print("increment:", increment)
         Z_filtered_t = Z_t + increment #(np,bs,Dz)
         
         if self.inflation_method=="RTPP":
@@ -88,6 +98,8 @@ class EnKO(BaseSystem):
         # Kalman gain
         K_t = Sigma_zx_t @ torch.inverse(Sigma_w_t) # (bs,Dz,Dx)
         increment = (K_t @ (x_t - x_hat_t).permute(1,2,0)).permute(2,0,1) # (np,bs,Dz)
+        #print("K_t:", K_t)
+        #print("increment:", increment)
         Z_filtered_t = Z_t + increment #(np,bs,Dz)
         
         if self.inflation_method=="RTPP":
@@ -111,6 +123,8 @@ class EnKO(BaseSystem):
         Sigma_zx_t = addjust_term * (centered_Z_t.unsqueeze(3).repeat(1,1,1,self.x_dim)
                     * centered_dec_mean_t.unsqueeze(2).repeat(1,1,self.z_dim,1)).mean(axis=0) # (bs,Dz,Dx)
         Sigma_w_t = addjust_term * (centered_x_t**2).mean(axis=0) # (bs,Dx)
+        if not self.integrate_Sigma_on:
+            Sigma_w_t = Sigma_w_t + addjust_term * (centered_dec_mean_t**2).mean(axis=0) # (bs,Dx)
         
         # Kalman gain
         K_t = (Sigma_zx_t.permute(1,0,2) / Sigma_w_t).permute(1,0,2) # (bs,Dz,Dx)

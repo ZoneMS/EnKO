@@ -1,0 +1,28 @@
+{
+    "n_simulation":100,
+    "n_timesteps":100,
+    "n_samples":10,
+    "n_particles":32,
+    "seed":1,
+    "init_std":1e-1,
+    "std":1e-2,
+    "offdiag_scale":0.1,
+    "confounder_scale":0.05,
+    "dim_state_range":[2,11],
+    "dim_obs_range":[2,11],
+    "shared_evolution_on":false,
+    
+    "transforms":{
+        "f":"square-tanh",
+        "g":"square-tanh",
+        "q":"square-tanh"
+    },
+    
+    "distributions":{
+        "f1":"Gauss",
+        "f":"student-t5",
+        "g":"student-t5",
+        "q1":"Gauss",
+        "q":"Gauss"
+    }
+}
