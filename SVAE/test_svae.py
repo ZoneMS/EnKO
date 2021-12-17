@@ -14,7 +14,7 @@ from torch.backends import cudnn
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
-from utils import load_data, transform_data, get_dataset, get_model, plot_predictive_result, fhn_quiver_plot, lorenz_traj_plot, allen_traj_plot, predictive_plot, rot_mnist_plot, reconstructed_amc_plot
+from utils import *
 
 
 def test():

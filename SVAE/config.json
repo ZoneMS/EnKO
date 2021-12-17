@@ -1,12 +1,12 @@
 {
     "train": {
-        "date": 211027,
+        "date": 211217,
         "number_of_date": "",
         "batch_size": 40,
         "lr": 0.001,
         "epoch": 3000,
         "conti_key": null,
-        "train_rate": 0.8,
+        "train_rate": 0.5,
         "valid_rate": 0.1,
         "train_num": 360,
         "valid_num": 40,
@@ -20,17 +20,20 @@
         "outer_model": "StyleConv",
         "model": "SVO",
         "data_name": "rmnist",
+        "st_point": 0,
+        "ed_point": null,
         "scaling": null,
-        "scaling_factor": 1000000.0
+        "scaling_factor": 0
     },
     
     "training": {
         "scheduler": "Plateau",
-        "decay_steps": 20,
-        "decay_rate": 0.8,
+        "decay_steps": 200,
+        "decay_rate": 0.7,
         "early_stop_patience": 3000,
         "patience": 30,
-        "clip": 150,
+        "saturated_patience": 4000,
+        "clip": 10,
         "min_lr": 0.0003,
         "adjoint": true,
         "only_outer_learning_epochs": 0,
@@ -41,12 +44,12 @@
     
     "network": {
         "Dz": 2,
-        "Dh": 50,
+        "Dh": 32,
         "rnn": "GRU",
-        "n_rnn_units": 50,
+        "n_rnn_units": 32,
         "g_dim": 1,
         "g_random_on": false,
-        "n_particles": 32,
+        "n_particles": 16,
         "n_layers": 1,
         "n_rnn_layers": 1,
         "bias": false,
@@ -72,8 +75,8 @@
     
     "enko": {
         "filtering_method": "inverse",
-        "inflation_method": null,
-        "inflation_factor": 0,
+        "inflation_method": "RTPP",
+        "inflation_factor": 0.1,
         "integrate_Sigma_on": true,
         "exclude_filtering_on": true
     },
@@ -167,6 +170,6 @@
     
     "print": {
         "print_freq": 1,
-        "save_freq": 10
+        "save_freq": 1
     }
 }

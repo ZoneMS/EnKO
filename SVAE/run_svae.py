@@ -14,7 +14,7 @@ from torch.backends import cudnn
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
-from utils import load_data, transform_data, get_dataset, get_model, plot_loss, plot_predictive_result
+from utils import *
 from test_svae import test_main
 
 
