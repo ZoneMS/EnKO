@@ -1,10 +1,10 @@
 {
     "train": {
-        "date": 211217,
-        "number_of_date": "",
-        "batch_size": 40,
+        "date": 220107,
+        "number_of_date": "2",
+        "batch_size": 20,
         "lr": 0.001,
-        "epoch": 3000,
+        "epoch": 2000,
         "conti_key": null,
         "train_rate": 0.5,
         "valid_rate": 0.1,
@@ -12,17 +12,17 @@
         "valid_num": 40,
         "num_workers": 0,
         "seed": 1,
-        "gpu": 0
+        "gpu": 2
     },
     
     "data": {
-        "system": "EnKO",
-        "outer_model": "StyleConv",
-        "model": "SVO",
-        "data_name": "rmnist",
+        "system": "FIVO",
+        "outer_model": null,
+        "model": "VRNN",
+        "data_name": "FHN",
         "st_point": 0,
         "ed_point": null,
-        "scaling": null,
+        "scaling": "abs-div",
         "scaling_factor": 0
     },
     
@@ -39,7 +39,7 @@
         "only_outer_learning_epochs": 0,
         "pretrain_list": null,
         "pretrain_epochs": null,
-        "pred_steps": 15
+        "pred_steps": 20
     },
     
     "network": {
@@ -69,7 +69,7 @@
         "sigma_min": 0.1,
         "sigma_train": true,
         "enc_steps": null,
-        "loss_type": "sumprod",
+        "loss_type": "prodsum",
         "correct_elbo_on": true
     },
     
@@ -160,8 +160,7 @@
     
     "test": {
         "evaluation_metrics": [
-            "MSE",
-            "FIP"
+            "MSE"
         ],
         "pred_start": 50,
         "predictive_steps": 150,

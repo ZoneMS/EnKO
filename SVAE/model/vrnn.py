@@ -222,8 +222,10 @@ class VRNN(BaseModel):
         # x:(T,bs,Dx), h_t:(nl,T,np,bs,Dh)
         T = x.size(0)
         batch_size = x.size(1)
-        MSE = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
-        TV = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
+        MSE = np.zeros([pred_steps, batch_size, x.size(2)])
+        TV = np.zeros([pred_steps, batch_size, x.size(2)])
+#         MSE = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
+#         TV = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
         if time is not None:
             dt = time[1:] - time[:-1] #(T,bs)
         
@@ -250,8 +252,8 @@ class VRNN(BaseModel):
             h_t = h_t.reshape(self.n_layers, T, self.n_particles, batch_size, self.r_dim)
             
             #calcurate
-            MSE[t] = ((x[t+1:] - x_hat_t[:-(t+1)].mean(axis=1))**2).mean(axis=0) #(bs,Dx)
-            TV[t] = ((x[t+1:] - x[t+1:].mean(axis=0))**2).mean(axis=0) #(bs,Dx)
+            MSE[t] = ((x[t+1:] - x_hat_t[:-(t+1)].mean(axis=1))**2).mean(axis=0).data.cpu().numpy() #(bs,Dx)
+            TV[t] = ((x[t+1:] - x[t+1:].mean(axis=0))**2).mean(axis=0).data.cpu().numpy() #(bs,Dx)
         
         return MSE, TV
     

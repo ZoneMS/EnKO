@@ -1,6 +1,6 @@
 ## Self
-results/*.pth
-results/*/*.pth
+results/
+*/nohup.out
 
 ## Python
 # Byte-compiled / optimized / DLL files
