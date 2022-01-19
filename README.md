@@ -1,7 +1,6 @@
 # PyTorch Implementation for Ensemble Kalman Variational Objective (EnKO)
-This repository includes PyTorch implementation for "Ensemble Kalman Variational Objective: Nonlinear Latent Time-Series Model Inference by a Hybrid of Variational Inference and Ensemble Kalman Filter," an under review paper for ICML.
-Following double-blind review policy of ICML, we hide our names and affiliations.
-If our paper is accepted, we would like to open the identical repository in our mainly used GitHub page.
+This repository includes PyTorch implementation for Ensemble Kalman Variational Objective: A Variational Inference Framework for Sequential Variational Auto-Encoders," an under review paper for JMLR.
+
 
 ## Contents
 This repository can implement following systems, models and data.
