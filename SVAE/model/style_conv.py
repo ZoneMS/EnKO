@@ -71,7 +71,7 @@ class StyleConv(Conv):
         vae_loss = kld_tran + kld_style + self.style_weight * kld_average + negative_log_likelihood
             
         loss_set, var_set = self.model(a_tran, *args)
-        z, a_hat_tran, H = var_set
+        z_prevs, z_fils, a_hat_tran, H = var_set
         a_hat = torch.cat([a_hat_tran, a_style.unsqueeze(0).unsqueeze(0).repeat(T,self.n_particles,1,1)], dim=3) #(T,np,bs,Ds)
         x_hat = self.dec(a_hat.reshape(T*self.n_particles*batch_size,self.a_dim)) #(T*np*bs,Dx)
         x_hat = x_hat.reshape(T,self.n_particles,batch_size,c,h,w) #(T,np,bs,c,h,w)
@@ -81,7 +81,7 @@ class StyleConv(Conv):
         else:
             total_loss = self.outer_scale * vae_loss + loss_set[0]
         
-        return [total_loss, vae_loss, negative_log_likelihood, kld_tran, kld_style, kld_average] + list(loss_set), (z, a_hat, a_style, H, x_hat)
+        return [total_loss, vae_loss, negative_log_likelihood, kld_tran, kld_style, kld_average] + list(loss_set), (z_prevs, z_fils, a_hat, a_style, H, x_hat)
     
     
     

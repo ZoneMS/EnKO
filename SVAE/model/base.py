@@ -49,6 +49,7 @@ class BaseModel(nn.Module):
         self.kld_penalty_on = self.kld_penalty_weight > 0
         self.transition_penalty_on = config["network"]["transition_penalty_on"]
         self.exclude_filtering_on = config["enko"]["exclude_filtering_on"]
+        # self.thresholds_of_cosine_similarity = config["network"]["cosine_th"]
         
         if self.system_name=="EnKO":
             self.system = EnKO(x_dim, config, device)
@@ -163,7 +164,7 @@ class BaseModel(nn.Module):
         return - 0.5 * torch.sum(x.pow(2) + math.log(2*math.pi), dim=dim, keepdim=keepdim)
     
     
-    def _get_elbo(self, log_gs, log_fs, log_qs, klds=None, saturated_on=False):
+    def _get_elbo(self, log_gs, log_fs, log_qs, Z_prevs, klds=None, saturated_on=False):
         if self.transition_penalty_on and (not saturated_on):
             log_fs = self.x_dim / self.z_dim * log_fs
             log_qs = self.x_dim / self.z_dim * log_qs
@@ -184,14 +185,15 @@ class BaseModel(nn.Module):
             log_g = torch.logsumexp(log_gs.sum(axis=0), axis=0).mean()
             log_q = log_q.sum(axis=0).mean() #(bs,)
         ESS = self._calculate_ess(log_gs+log_fs-log_qs).mean() #(T,)
+        mean_cosine_similarity = self.calculate_cosine_similarity(Z_prevs).mean() #(T,nc,bs)
         if self.kld_penalty_on:
             kld = klds.sum(axis=0).mean() #(T,np,bs),(np,bs)
             #kld = torch.logsumexp(klds.sum(axis=0), axis=0).mean() #(T,np,bs),(np,bs),(bs,)
             if not saturated_on:
                 log_ZSMC = log_ZSMC - self.kld_penalty_weight * kld
-            return (-log_ZSMC, -log_f, -log_g, log_q, ESS, kld)
+            return (-log_ZSMC, -log_f, -log_g, log_q, ESS, mean_cosine_similarity, kld)
         else:
-            return (-log_ZSMC, -log_f, -log_g, log_q, ESS)
+            return (-log_ZSMC, -log_f, -log_g, log_q, ESS, mean_cosine_similarity)
     
     
     def _get_dropout_elbo(self, log_gs, log_fs, log_qs, dropout_on):
@@ -231,6 +233,19 @@ class BaseModel(nn.Module):
         ESS = 1 / torch.sum(torch.exp(log_W)**2, dim=0) #(T,bs)
         ESS_mean = torch.mean(ESS, dim=1) #(T,)
         return ESS_mean
+    
+    
+    def calculate_cosine_similarity(self, Z):
+        # Z: (T,np,bs,Dz)
+        n_particles = Z.shape[1]
+        combinations = torch.combinations(torch.arange(n_particles)) #(nc,2)
+        Z_mean = Z.mean(1) #(T,bs,Dz)
+        Z_centered = Z - Z_mean[:,np.newaxis] #(T,np,bs,Dz)
+        inner_products = (Z_centered[:,combinations[:,0]] * Z_centered[:,combinations[:,1]]).sum(3) #(T,nc,bs)
+        cosine_similarity = torch.where(inner_products==0, torch.ones_like(inner_products), 
+                                        inner_products/(torch.norm(Z_centered[:,combinations[:,0]], dim=3)*torch.norm(Z_centered[:,combinations[:,1]], dim=3))) #(T,nc,bs)
+        return cosine_similarity
+    
     
     
     def _construct_dense_network(self, input_dim, hidden_dim, output_dim=None, n_layers=1, activation_fn=Identity, output_fn=Identity):

@@ -117,22 +117,22 @@ class Conv(OuterModel):
         if epoch <= self.only_outer_learning_epochs and train_on:
             if True:
                 loss_set, var_set = self.model(a, *args)
-                z, a_hat, H = var_set
+                z_prevs, z_fils, a_hat, H = var_set
                 x_hat = self.dec(a_hat.reshape(T*self.n_particles*batch_size,self.a_dim)) #(T*np*bs,Dx)
                 x_hat = x_hat.reshape(T,self.n_particles,batch_size,c,h,w) #(T,np,bs,c,h,w)
             else:
                 loss_set = torch.zeros(10)
-                z, a_hat, H, x_hat = None, None, None, None
+                z_prevs, z_fils, a_hat, H, x_hat = None, None, None, None
             total_loss = self.outer_scale * vae_loss
         else:
             ## inner model loss
             loss_set, var_set = self.model(a, *args)
-            z, a_hat, H = var_set
+            z_prevs, z_fils, a_hat, H = var_set
             x_hat = self.dec(a_hat.reshape(T*self.n_particles*batch_size,self.a_dim)) #(T*np*bs,Dx)
             x_hat = x_hat.reshape(T,self.n_particles,batch_size,c,h,w) #(T,np,bs,c,h,w)
             total_loss = self.outer_scale * vae_loss + loss_set[0]
         
-        return [total_loss, vae_loss, negative_log_likelihood, kl_divergence] + list(loss_set), (z, a_hat, H, x_hat)
+        return [total_loss, vae_loss, negative_log_likelihood, kl_divergence] + list(loss_set), (z_prevs, z_fils, a_hat, H, x_hat)
     
     
     

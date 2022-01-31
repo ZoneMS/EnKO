@@ -47,7 +47,7 @@ def load_data(config):
         if data_name=="FHN":
             obs = np.load("../data/FHN/FHN_rk_obs0_ns400_dt001_T3000_ds15_ssd0_osd01.npy").astype("float32") # (ns,T,Dx)=(400,200,1)
         elif data_name=="Lorenz":
-            obs = np.load("../data/Lorentz/Lorentz_rk_obs_ns100_dt001_T750_ds3_ssd0_osd01.npy").astype("float32") # (ns,T,Dx)=(100,250,3)
+            obs = np.load("../data/Lorenz/Lorentz_rk_obs_ns100_dt001_T750_ds3_ssd0_osd01.npy").astype("float32") # (ns,T,Dx)=(100,250,3)
         n_sample = len(obs)
         obs = obs[:,st_point:]
         train_sp = int(n_sample*config["train"]["train_rate"]) # train separating point
@@ -127,9 +127,9 @@ def get_dataset(config, obs_train, obs_valid, time_train, time_valid):
 
 
 def get_model(config, Dx, device):
-    loss_name_list_dict = {"VRNN":["loss", "-logf", "-logg", "logq", "ESS"],
-                           "AESMC":["loss", "-logf", "-logg", "logq", "ESS"],
-                           "SVO":["loss", "-logf", "-logg", "logq", "ESS"]}
+    loss_name_list_dict = {"VRNN":["loss", "-logf", "-logg", "logq", "ESS", "MCS"],
+                           "AESMC":["loss", "-logf", "-logg", "logq", "ESS", "MCS"],
+                           "SVO":["loss", "-logf", "-logg", "logq", "ESS", "MCS"]}
     outer_model = config["data"]["outer_model"]
     model_name = config["data"]["model"]
     system = config["data"]["system"]
@@ -337,6 +337,18 @@ def plot_predictive_result(result, pred_steps, result_dir, rname_list, experimen
                 bbox_inches="tight")
     if experiment is not None:
         experiment.log_figure("{}predictive evaluations".format("" if add_name is None else "{}_".format(add_name)), fig)
+        
+        
+        
+def plot_cosine_similarity(cosine_similarity, result_dir, experiment=None, add_name=None):
+    fig, ax = plt.subplots(1,1,figsize=(10,5))
+    ax.plot(np.linspace(0,1,np.prod(cosine_similarity.shape)), np.sort(cosine_similarity.flatten()))
+    ax.set_xlabel("percentage")
+    ax.set_ylabel("cosine similarity")
+    fig.savefig(os.path.join(result_dir, "cosine_similarity{}.pdf".format("" if add_name is None else "_{}".format(add_name))), bbox_inches="tight")
+    if experiment is not None:
+        experiment.log_figure("{}cosine similarity".format("" if add_name is None else "{} ".format(add_name)), fig)
+        
 
     
     
@@ -347,12 +359,16 @@ def predictive_plot(config, device, result_dir, model, obs_test, pred_start=100,
     model.eval()
     Dx = obs_test.shape[2]
     data = Variable(torch.from_numpy(obs_test[:data_num]))
-    if model_name in ["SVO", "AESMC"]:
-        _, (Z, X, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    if model_name in ["SVO", "SVOp", "SVO-II", "MINN-SVO", "PSVO", "AESMC", "NODE"]:
+        _, (_, Z, X, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
         (x_hat, _) = model.prediction(Z[pred_start], pred_steps)
-    elif model_name in ["VRNN"]:
-        _, (_, X, H) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    elif model_name in ["VRNN", "MINN"]:
+        _, (_, _, X, H) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
         (x_hat, _) = model.prediction(H[:,pred_start], pred_steps)
+    elif model_name in ["SRNN"]:
+        covariate = Variable(torch.from_numpy(np.insert(obs_test[:data_num],0,0,axis=1)[:,:-1]))
+        _, (_, Z, X, H) = model(data.transpose(0,1).to(device), covariate.transpose(0,1).to(device)) #(T,np,bs,Dz)
+        (x_hat, _) = model.prediction(Z[pred_start], H[pred_start], pred_steps)
     X = X.detach().cpu().numpy().mean(axis=1) #(T,bs,Dx)
     x_hat = x_hat.detach().cpu().numpy() #(ps,np,bs,Dx)
     x_hat_mean = x_hat.mean(axis=1) #(ps,bs,Dx)
@@ -388,7 +404,11 @@ def fhn_quiver_plot(config, device, result_dir, model, obs_test, experiment=None
     model.eval()
     
     data = Variable(torch.from_numpy(obs_test[:data_num]))
-    _, (Z, _, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    if model_name=="SRNN":
+        covariate = Variable(torch.from_numpy(np.insert(obs_test[:data_num],0,0,axis=1)[:,:-1]))
+        _, (_, Z, _, _) = model(data.transpose(0,1).to(device), covariate.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    else:
+        _, (_, Z, _, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
     Z = Z.detach().cpu().numpy().mean(axis=1) #(T,bs,Dz)
     
     if separate_fig_on:
@@ -458,13 +478,17 @@ def lorenz_traj_plot(config, device, result_dir, model, obs_test, experiment=Non
     add_name = "" if add_name is None else "{}_".format(add_name)
     model.eval()
     model_name = config["data"]["model"]
-    true = np.load("../data/Lorentz/Lorentz_rk_true_ns100_dt001_T750_ds3_ssd0_osd01.npy").astype("float32") # (ns,T,Dx)=(100,250,3)
+    true = np.load("../data/Lorenz/Lorentz_rk_true_ns100_dt001_T750_ds3_ssd0_osd01.npy").astype("float32") # (ns,T,Dx)=(100,250,3)
     n_sample = len(true)
     train_sp = int(n_sample*config["train"]["train_rate"]) # train separating point
     valid_sp = int(n_sample*config["train"]["valid_rate"]) + train_sp # validation separating point
 
     data = Variable(torch.from_numpy(obs_test[:data_num]))
-    _, (Z, _, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    if model_name=="SRNN":
+        covariate = Variable(torch.from_numpy(np.insert(obs_test[:data_num],0,0,axis=1)[:,:-1]))
+        _, (_, Z, _, _) = model(data.transpose(0,1).to(device), covariate.transpose(0,1).to(device)) #(T,np,bs,Dz)
+    else:
+        _, (_, Z, _, _) = model(data.transpose(0,1).to(device)) #(T,np,bs,Dz)
     Z = Z.detach().cpu().numpy().mean(axis=1) #(T,bs,Dz)
     
     if separate_fig_on:
@@ -523,9 +547,7 @@ def lorenz_traj_plot(config, device, result_dir, model, obs_test, experiment=Non
     else:
         fig.savefig(os.path.join(result_dir, "{}traj_plot{}{}{}.pdf".format(add_name, "" if horizontal else "_vert", "_ax" if plot_axes else "", epoch)), bbox_inches="tight")
         if experiment is not None:
-            experiment.log_figure("{}trajectory_plot".format(add_name), fig)
-        
-        
+            experiment.log_figure("{}trajectory_plot".format(add_name), fig)        
         
         
 def get_gpu_info(nvidia_smi_path='nvidia-smi', keys=("index", "uuid", "name", "timestamp", "memory.total", "memory.free", "memory.used", "utilization.gpu", "utilization.memory"), no_units=True):

@@ -71,17 +71,19 @@ class SRNN(BaseModel):
         
     
     def forward(self, x, inputs):
-        (log_gs, log_fs, log_qs), (Zs, Xs, hs) = self.SMC(x, inputs)
-        loss_set = self._get_elbo(log_gs, log_fs, log_qs)
-        return loss_set, (Zs, Xs, hs)
+        (log_gs, log_fs, log_qs), (Z_prevs, Zs, Xs, hs) = self.SMC(x, inputs)
+        loss_set = self._get_elbo(log_gs, log_fs, log_qs, Z_prevs, None)
+        return loss_set, (Z_prevs, Zs, Xs, hs)
     
     
     def SMC(self, x, inputs):
         Zs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1), self.z_dim), requires_grad=False).to(self.device) #(T,np,bs,Dz)
         Xs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1), self.x_dim), requires_grad=False).to(self.device) #(T,np,bs,Dz)
+        Z_prevs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1), self.z_dim), requires_grad=False).to(self.device) #(T,np,bs,Dz)
         log_fs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1)), requires_grad=False).to(self.device).div_(self.n_particles) #(T,np,bs)
         log_gs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1)), requires_grad=False).to(self.device).div_(self.n_particles) #(T,np,bs)
         log_qs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1)), requires_grad=False).to(self.device).div_(self.n_particles) #(T,np,bs)
+        klds = Variable(torch.ones(x.size(0), self.n_particles, x.size(1)), requires_grad=False).to(self.device) #(T,np,bs)
         phi_z_filtered_t = Variable(torch.zeros(self.n_particles, x.size(1), self.h_dim)).to(self.device) #(np,bs,Dh)
         
         phi_u = self.phi_x(inputs) # (T,bs,Dh)
@@ -117,6 +119,7 @@ class SRNN(BaseModel):
             dec_std_t = self.dec_std(dec_t) #(np,bs,Dx)
             
             #computing losses
+            #kld_t = self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t, dim=2) #(np,bs)
             log_g_t = self._log_prob_emission(dec_mean_t, # (np,bs,Dx)
                                        dec_std_t, # (Dx)
                                        x[t].clone(), # (bs,Dx)
@@ -128,7 +131,7 @@ class SRNN(BaseModel):
             
             #update
             if self.system_name=="EnKO":
-                z_filtered_t = self.system.update(x[t].clone(), z_t, dec_mean_t, dec_std_t) #(np,bs,Dz)
+                z_filtered_t = self.system.update(x[t].clone(), z_t, dec_mean_t, dec_std_t, log_W_t) #(np,bs,Dz)
                 phi_z_filtered_t = self.phi_z(z_filtered_t) #(np,bs,Dh)
                 dec_filtered_mean_t = self.dec_mean(self.dec(torch.cat([phi_z_filtered_t, rnn_out[t]], 2)) ) # (np,bs,Dx)
                 #dec_filtered_std_t = self.dec_std(dec_filtered_t) #(np,bs,Dx)
@@ -140,21 +143,25 @@ class SRNN(BaseModel):
                 z_filtered_t, phi_z_filtered_t, dec_filtered_mean_t = z_t, phi_z_t, dec_mean_t
             
             # write
+            #klds[t] = kld_t
             log_gs[t] = log_g_t
             log_fs[t] = log_f_t
             log_qs[t] = log_q_t
+            Z_prevs[t] = z_t
             Zs[t] = z_filtered_t
             Xs[t] = dec_filtered_mean_t
             
-        return (log_gs, log_fs, log_qs), (Zs, Xs, rnn_out)
+        return (log_gs, klds, log_fs, log_qs), (Z_prevs, Zs, Xs, rnn_out)
     
     
     def calculate_mse(self, x, z_t, h_t, pred_steps=5):
         # x:(T,bs,Dx), z_t:(T,np,bs,Dz), h_t:(T,np,bs,Dh)
         T = x.size(0)
         batch_size = x.size(1)
-        MSE = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
-        TV = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
+        MSE = np.zeros([pred_steps, batch_size, x.size(2)])
+        TV = np.zeros([pred_steps, batch_size, x.size(2)])
+#         MSE = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
+#         TV = Variable(torch.zeros(pred_steps, batch_size, x.size(2)), requires_grad=False).to(self.device) #(ps,bs,Dx)
         h_t = h_t.unsqueeze(0) #(1,T,np,bs,Dh)
         phi_z_t = self.phi_z(z_t) #(T,np,bs,Dh)
         x_hat_t = x.unsqueeze(1).repeat(1,self.n_particles,1,1) #(T,np,bs,Dx)
@@ -176,10 +183,44 @@ class SRNN(BaseModel):
             x_hat_t = self.dec_mean(self.dec(torch.cat([phi_z_t, h_t[-1]], 3))) #(T,np,bs,Dx)
             
             #calcurate
-            MSE[t] = ((x[t+1:] - x_hat_t[:-(t+1)].mean(axis=1))**2).mean(axis=0) #(bs,Dx)
-            TV[t] = ((x[t+1:] - x[t+1:].mean(axis=0))**2).mean(axis=0) #(bs,Dx)
+            MSE[t] = ((x[t+1:] - x_hat_t[:-(t+1)].mean(axis=1))**2).mean(axis=0).data.cpu().numpy() #(bs,Dx)
+            TV[t] = ((x[t+1:] - x[t+1:].mean(axis=0))**2).mean(axis=0).data.cpu().numpy() #(bs,Dx)
         
         return MSE, TV
+    
+    
+    def init_running(self, x, inputs):
+        Zs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1), self.z_dim), requires_grad=False).to(self.device) #(T,np,bs,Dz)
+        Xs = Variable(torch.ones(x.size(0), self.n_particles, x.size(1), self.x_dim), requires_grad=False).to(self.device) #(T,np,bs,Dz)
+        phi_z_t = Variable(torch.zeros(self.n_particles, x.size(1), self.h_dim)).to(self.device) #(np,bs,Dh)
+        
+        phi_u = self.phi_x(inputs) # (T,bs,Dh)
+        rnn_out, _ = self.rnn_fw(phi_u) #(T,bs,Dh)
+        phi_x = self.phi_x(x) # (T,bs,Dh)
+        rnn_bw_out, _ = self.rnn_bw(torch.flip(torch.cat([phi_x, rnn_out], 2), [0])) #(T,bs,Dh)
+        rnn_bw_out = torch.flip(rnn_bw_out.view(x.size(0), x.size(1), self.h_dim), [0]) # (T,bs,Dh)
+        
+        # expansion for particles
+        rnn_out = rnn_out.unsqueeze(1).repeat(1,self.n_particles,1,1) # (T,np,bs,Dh)
+        rnn_bw_out = rnn_bw_out.unsqueeze(1).repeat(1,self.n_particles,1,1) # (T,np,bs,Dh)
+        
+        for t in range(x.size(0)):
+            #prior
+            prior_t = self.prior(torch.cat([phi_z_t, rnn_out[t]], 2)) #(np,bs,Dh)
+            z_t = self.prior_mean(prior_t) #(np,bs,Dz)
+            #prior_std_t = self.prior_std(prior_t) #(np,bs,Dz)
+            phi_z_t = self.phi_z(z_t) #(np,bs,Dh)
+
+            #decoder
+            dec_t = self.dec(torch.cat([phi_z_t, rnn_out[t]], 2)) #(np,bs,Dh)
+            dec_mean_t = self.dec_mean(dec_t) #(np,bs,Dx)
+            #dec_std_t = self.dec_std(dec_t) #(np,bs,Dx)
+            
+            # write
+            Zs[t] = z_t
+            Xs[t] = dec_mean_t
+            
+        return Zs, Xs
     
     
     
@@ -258,3 +299,15 @@ class SRNN(BaseModel):
         #prior
         z_t = self.prior_mean(self.prior(torch.cat([h_t, phi_z_t],2))) # (np,bs,Dz)
         return z_t
+
+
+    def get_X_from_Z(self, z_t, h_t=None):
+        if h_t is None:
+            h_t = torch.zeros(z_t.size(0), z_t.size(1), self.h_dim).to(self.device) #(np,bs,Dh)
+            
+        #decoder
+        phi_z_t = self.phi_z(z_t) #(np,ns,Dh)
+        x_hat_t = self.dec_mean(self.dec(torch.cat([phi_z_t, h_t], 2))) #(np,bs,Dx)
+        return x_hat_t
+            
+        

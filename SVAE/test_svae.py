@@ -19,7 +19,7 @@ from utils import *
 
 def test():
     if True:
-        name = "211027_EnKO_StyleConv-SVO_rmnist"
+        name = "220119_FIVO_SVO_Lorenz"
         name = "../results/{}".format(name)
         test_main(name, valid_on=True, gpu_id=0)
         test_main(name, gpu_id=0)
@@ -122,6 +122,7 @@ def test_main(result_dir, experiment=None, epoch=None, pred_steps=None, valid_on
         model.eval()
         loss = np.zeros(n_losses)
         pred_evals = np.zeros((len(total_evaluation_metrics), pred_steps))
+        cosine_similarity = []
         
         for (data, covariate) in test_loader:
             data = Variable(data)
@@ -132,32 +133,33 @@ def test_main(result_dir, experiment=None, epoch=None, pred_steps=None, valid_on
             H = None
             if outer_model is None:
                 if model_name=="SRNN":
-                    _loss, (Z, _, H)  = model(data, covariate)
+                    _loss, (Zp, Z, _, H)  = model(data, covariate)
                 elif model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, _)  = model(data, saturated_on)
+                    _loss, (Zp, Z, _, _)  = model(data, saturated_on)
                 elif model_name in ["VRNN"]:
                     if time_train is not None:
-                        _loss, (_, _, Z)  = model(data, saturated_on, covariate)
+                        _loss, (Zp, _, _, Z)  = model(data, saturated_on, covariate)
                     else:
-                        _loss, (_, _, Z)  = model(data, saturated_on)
+                        _loss, (Zp, _, _, Z)  = model(data, saturated_on)
                 else:
                     _loss, _  = model(data)
             elif outer_model=="Conv":
                 if model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, _, _)  = model(data, max_epoch, False)
+                    _loss, (Zp, Z, _, _, _)  = model(data, max_epoch, False)
                 elif model_name in ["VRNN"]:
-                    _loss, (_, _, Z, _)  = model(data, max_epoch)
+                    _loss, (Zp, _, _, Z, _)  = model(data, max_epoch)
                 else:
                     _loss, _  = model(data, max_epoch, max_epoch)
             elif outer_model=="StyleConv":
                 if model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, a_style, _, _)  = model(data, max_epoch, False, False)
+                    _loss, (Zp, Z, _, a_style, _, _)  = model(data, max_epoch, False, False)
                 elif model_name in ["VRNN"]:
-                    _loss, (_, _, a_style, Z, _)  = model(data, max_epoch, False)
+                    _loss, (Zp, _, _, a_style, Z, _)  = model(data, max_epoch, False)
             
             for i in range(n_losses):
                 loss[i] += _loss[i].item()
             
+            cosine_similarity.append(model.calculate_cosine_similarity(Zp).data.cpu().numpy()) #(T,nc,bs)
             eval_count = 0
             if outer_model in ["Conv"]:
                 _metrics = model.calculate_predictive_metrics(data, Z, H, pred_steps, evaluation_metrics) #(nm,ps,bs)
@@ -196,15 +198,17 @@ def test_main(result_dir, experiment=None, epoch=None, pred_steps=None, valid_on
             print_contents += " {} = {:.4f}".format(loss_name,
                                                     loss[i])
         print(print_contents)
-        return loss, pred_evals
+        cosine_similarity = np.concatenate(cosine_similarity, axis=2) #(T,nc,ns)
+        return loss, pred_evals, cosine_similarity
     
     
     ## Train model
     def execute():
         # training + testing
-        test_loss, pred_evals = test()
+        test_loss, pred_evals, cosine_similarity = test()
         np.save(os.path.join(result_dir, "{}_loss{}.npy".format("valid" if valid_on else "test", epoch_name)), test_loss)
         np.save(os.path.join(result_dir, "pred_evals_{}{}.npy".format("valid" if valid_on else "test", epoch_name)), pred_evals)
+        np.save(os.path.join(result_dir, "cosine_similarity_{}{}.npy".format("valid" if valid_on else "test", epoch_name)), cosine_similarity)
         plot_predictive_result(pred_evals, pred_steps, result_dir, total_evaluation_metrics, experiment, "{}{}".format("valid" if valid_on else "test", epoch_name))
         
         if data_name in ["FHN", "Lorenz", "Allen"]:

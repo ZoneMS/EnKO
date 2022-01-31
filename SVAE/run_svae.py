@@ -245,26 +245,26 @@ def main(config, name):
             H = None
             if outer_model is None:
                 if model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, _)  = model(data, saturated_on)
+                    _loss, (_, Z, _, _)  = model(data, saturated_on)
                 elif model_name in ["VRNN"]:
                     if time_train is not None:
-                        _loss, (_, _, Z)  = model(data, saturated_on, covariate)
+                        _loss, (_, _, _, Z)  = model(data, saturated_on, covariate)
                     else:
-                        _loss, (_, _, Z)  = model(data, saturated_on)
+                        _loss, (_, _, _, Z)  = model(data, saturated_on)
                 else:
                     _loss, _  = model(data)
             elif outer_model=="Conv":
                 if model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, _, _)  = model(data, epoch, False, saturated_on)
+                    _loss, (_, Z, _, _, _)  = model(data, epoch, False, saturated_on)
                 elif model_name in ["VRNN"]:
-                    _loss, (_, _, Z, _)  = model(data, epoch, False)
+                    _loss, (_, _, _, Z, _)  = model(data, epoch, False)
                 else:
                     _loss, _  = model(data, epoch, False)
             elif outer_model=="StyleConv":
                 if model_name in ["SVO", "AESMC"]:
-                    _loss, (Z, _, a_style, _, _)  = model(data, epoch, False, saturated_on)
+                    _loss, (_, Z, _, a_style, _, _)  = model(data, epoch, False, saturated_on)
                 elif model_name in ["VRNN"]:
-                    _loss, (_, _, a_style, Z, _)  = model(data, epoch, False)
+                    _loss, (_, _, _, a_style, Z, _)  = model(data, epoch, False)
             
             for i in range(n_losses):
                 loss[i] += _loss[i].item()

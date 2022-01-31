@@ -111,9 +111,8 @@ class SVO(BaseModel):
     
     def forward(self, x, saturated_on=False):
         (_, log_gs, log_fs, log_qs, klds), (x_hat, x_prevs, Z_fils, Z_prevs), (_, _, gc) = self.SMC(x)
-        loss_set = self._get_elbo(log_gs, log_fs, log_qs, klds, saturated_on)
-        return loss_set, (Z_fils, x_hat, gc)
-#         return loss_set, (Z_fils, x_prevs, gc)
+        loss_set = self._get_elbo(log_gs, log_fs, log_qs, Z_prevs, klds, saturated_on)
+        return loss_set, (Z_prevs, Z_fils, x_hat, gc)
         
         
     def SMC(self, x):#(T,bs,Dx)

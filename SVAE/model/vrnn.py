@@ -110,8 +110,8 @@ class VRNN(BaseModel):
     
     def forward(self, x, saturated_on=False, t=None):
         (log_gs, log_fs, log_qs), (x_hat, x_prevs, Z_fils, Z_prevs, hs) = self.SMC(x, t)
-        loss_set = self._get_elbo(log_gs, log_fs, log_qs, None)
-        return loss_set, (Z_fils, x_hat, hs)
+        loss_set = self._get_elbo(log_gs, log_fs, log_qs, Z_prevs, None)
+        return loss_set, (Z_prevs, Z_fils, x_hat, hs)
     
     
     def SMC(self, x, time=None):
@@ -333,8 +333,9 @@ class VRNN(BaseModel):
         return R2, MSE
     
     
-    def get_next_Z(self, z_t):
-        h_t = Variable(torch.zeros(self.n_layers, z_t.size(0), z_t.size(1), self.r_dim)).to(self.device) #(nl,bs,bs,Dr)
+    def get_next_Z(self, z_t, h_t=None):
+        if h_t is None:
+            h_t = Variable(torch.zeros(self.n_layers, z_t.size(0), z_t.size(1), self.r_dim)).to(self.device) #(nl,bs,bs,Dr)
         
         #decoder
         phi_z_t = self.phi_z(z_t) #(bs,bs,Dh)
@@ -347,6 +348,16 @@ class VRNN(BaseModel):
         _, h_t = self.rnn(torch.cat([phi_x_t, phi_z_t], 2).reshape(z_t.size(0)*z_t.size(1), 2*self.h_dim).unsqueeze(0))
         h_t = h_t.reshape(self.n_layers, z_t.size(0), z_t.size(1), self.h_dim)
         return self.prior_mean(self.prior(h_t[-1])) # (bs,bs,Dz)
+    
+    
+    def get_X_from_Z(self, z_t, h_t=None):
+        if h_t is None:
+            h_t = Variable(torch.zeros(self.n_layers, z_t.size(0), z_t.size(1), self.r_dim)).to(self.device) #(nl,bs,bs,Dr)
+        
+        #decoder
+        phi_z_t = self.phi_z(z_t) #(bs,bs,Dh)
+        x_hat_t = self.dec_mean(self.dec(torch.cat([phi_z_t, h_t[-1]], 2))) #(bs,bs,Dx)
+        return x_hat_t
     
     
     def prediction(self, h_t, pred_steps=5):
